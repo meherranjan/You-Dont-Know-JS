@@ -470,3 +470,2167 @@ JS is a compiled language, meaning the tools (including the JS engine) process a
 With our language now *defined*, let's start getting to know its ins and outs.
 
 [^specApB]: ECMAScript 2019 Language Specification, Appendix B: Additional ECMAScript Features for Web Browsers, https://www.ecma-international.org/ecma-262/10.0/#sec-additional-ecmascript-features-for-web-browsers (latest as of time of this writing in January 2020)
+
+
+
+
+# You Don't Know JS Yet: Get Started - 2nd Edition
+# Chapter 2: Surveying JS
+
+The best way to learn JS is to start writing JS.
+
+To do that, you need to know how the language works, and that's what we'll focus on here. Even if you've programmed in other languages before, take your time getting comfortable with JS, and make sure to practice each piece.
+
+This chapter is not an exhaustive reference on every bit of syntax of the JS language. It's also not intended to be a complete "intro to JS" primer.
+
+Instead, we're just going to survey some of the major topic areas of the language. Our goal is to get a better *feel* for it, so that we can move forward writing our own programs with more confidence. We'll revisit many of these topics in successively more detail as you go through the rest of this book, and the rest of the series.
+
+Please don't expect this chapter to be a quick read. It's long and there's plenty of detail to chew on. Take your time.
+
+| TIP: |
+| :--- |
+| If you're still getting familiar with JS, I suggest you reserve plenty of extra time to work through this chapter. Take each section and ponder and explore the topic for awhile. Look through existing JS programs and compare what you see in them to the code and explanations (and opinions!) presented here. You will get a lot more out of the rest of the book and series with a solid foundation of JS's *nature*. |
+
+## Each File is a Program
+
+Almost every website (web application) you use is comprised of many different JS files (typically with the .js file extension). It's tempting to think of the whole thing (the application) as one program. But JS sees it differently.
+
+In JS, each standalone file is its own separate program.
+
+The reason this matters is primarily around error handling. Since JS treats files as programs, one file may fail (during parse/compile or execution) and that will not necessarily prevent the next file from being processed. Obviously, if your application depends on five .js files, and one of them fails, the overall application will probably only partially operate, at best. It's important to ensure that each file works properly, and that to whatever extent possible, they handle failure in other files as gracefully as possible.
+
+It may surprise you to consider separate .js files as separate JS programs. From the perspective of your usage of an application, it sure seems like one big program. That's because the execution of the application allows these individual *programs* to cooperate and act as one program.
+
+| NOTE: |
+| :--- |
+| Many projects use build process tools that end up combining separate files from the project into a single file to be delivered to a web page. When this happens, JS treats this single combined file as the entire program. |
+
+The only way multiple standalone .js files act as a single program is by sharing their state (and access to their public functionality) via the "global scope." They mix together in this global scope namespace, so at runtime they act as as whole.
+
+Since ES6, JS has also supported a module format in addition to the typical standalone JS program format. Modules are also file-based. If a file is loaded via module-loading mechanism such as an `import` statement or a `<script type=module>` tag, all its code is treated as a single module.
+
+Though you wouldn't typically think about a module—a collection of state and publicly exposed methods to operate on that state—as a standalone program, JS does in fact still treat each module separately. Similar to how "global scope" allows standalone files to mix together at runtime, importing a module into another allows runtime interoperation between them.
+
+Regardless of which code organization pattern (and loading mechanism) is used for a file (standalone or module), you should still think of each file as its own (mini) program, which may then cooperate with other (mini) programs to perform the functions of your overall application.
+
+## Values
+
+The most fundamental unit of information in a program is a value. Values are data. They're how the program maintains state. Values come in two forms in JS: **primitive** and **object**.
+
+Values are embedded in programs using *literals*:
+
+```js
+greeting("My name is Kyle.");
+```
+
+In this program, the value `"My name is Kyle."` is a primitive string literal; strings are ordered collections of characters, usually used to represent words and sentences.
+
+I used the double-quote `"` character to *delimit* (surround, separate, define) the string value. But I could have used the single-quote `'` character as well. The choice of which quote character is entirely stylistic. The important thing, for the sake of code readability and maintainability, is to pick one and to use it consistently throughout the program.
+
+Another option to delimit a string literal is to use the back-tick `` ` `` character. However, this choice is not merely stylistic; there's a behavioral difference as well. Consider:
+
+```js
+console.log("My name is ${ firstName }.");
+// My name is ${ firstName }.
+
+console.log('My name is ${ firstName }.');
+// My name is ${ firstName }.
+
+console.log(`My name is ${ firstName }.`);
+// My name is Kyle.
+```
+
+Assuming this program has already defined a variable `firstName` with the string value `"Kyle"`, the `` ` ``-delimited string then resolves the variable expression (indicated with `${ .. }`) to its current value. This is called **interpolation**.
+
+The back-tick `` ` ``-delimited string can be used without including interpolated expressions, but that defeats the whole purpose of that alternate string literal syntax:
+
+```js
+console.log(
+    `Am I confusing you by omitting interpolation?`
+);
+// Am I confusing you by omitting interpolation?
+```
+
+The better approach is to use `"` or `'` (again, pick one and stick to it!) for strings *unless you need* interpolation; reserve `` ` `` only for strings that will include interpolated expressions.
+
+Other than strings, JS programs often contain other primitive literal values such as booleans and numbers:
+
+```js
+while (false) {
+    console.log(3.141592);
+}
+```
+
+`while` represents a loop type, a way to repeat operations *while* its condition is true.
+
+In this case, the loop will never run (and nothing will be printed), because we used the `false` boolean value as the loop conditional. `true` would have resulted in a loop that keeps going forever, so be careful!
+
+The number `3.141592` is, as you may know, an approximation of mathematical PI to the first six digits. Rather than embed such a value, however, you would typically use the predefined `Math.PI` value for that purpose. Another variation on numbers is the `bigint` (big-integer) primitive type, which is used for storing arbitrarily large numbers.
+
+Numbers are most often used in programs for counting steps, such as loop iterations, and accessing information in numeric positions (i.e., an array index). We'll cover arrays/objects in a little bit, but as an example, if there was an array called `names`, we could access the element in its second position like this:
+
+```js
+console.log(`My name is ${ names[1] }.`);
+// My name is Kyle.
+```
+
+We used `1` for the element in the second position, instead of `2`, because like in most programming languages, JS array indices are 0-based (`0` is the first position).
+
+In addition to strings, numbers, and booleans, two other *primitive* values in JS programs are `null` and `undefined`. While there are differences between them (some historic and some contemporary), for the most part both values serve the purpose of indicating *emptiness* (or absence) of a value.
+
+Many developers prefer to treat them both consistently in this fashion, which is to say that the values are assumed to be indistinguishable. If care is taken, this is often possible. However, it's safest and best to use only `undefined` as the single empty value, even though `null` seems attractive in that it's shorter to type!
+
+```js
+while (value != undefined) {
+    console.log("Still got something!");
+}
+```
+
+The final primitive value to be aware of is a symbol, which is a special-purpose value that behaves as a hidden unguessable value. Symbols are almost exclusively used as special keys on objects:
+
+```js
+hitchhikersGuide[ Symbol("meaning of life") ];
+// 42
+```
+
+You won't encounter direct usage of symbols very often in typical JS programs. They're mostly used in low-level code such as in libraries and frameworks.
+
+### Arrays And Objects
+
+Besides primitives, the other value type in JS is an object value.
+
+As mentioned earlier, arrays are a special type of object that's comprised of an ordered and numerically indexed list of data:
+
+```js
+var names = [ "Frank", "Kyle", "Peter", "Susan" ];
+
+names.length;
+// 4
+
+names[0];
+// Frank
+
+names[1];
+// Kyle
+```
+
+JS arrays can hold any value type, either primitive or object (including other arrays). As we'll see toward the end of Chapter 3, even functions are values that can be held in arrays or objects.
+
+| NOTE: |
+| :--- |
+| Functions, like arrays, are a special kind (aka, sub-type) of object. We'll cover functions in more detail in a bit. |
+
+Objects are more general: an unordered, keyed collection of any various values. In other words, you access the element by a string location name (aka "key" or "property") rather than by its numeric position (as with arrays). For example:
+
+```js
+var me = {
+    first: "Kyle",
+    last: "Simpson",
+    age: 39,
+    specialties: [ "JS", "Table Tennis" ]
+};
+
+console.log(`My name is ${ me.first }.`);
+```
+
+Here, `me` represents an object, and `first` represents the name of a location of information in that object (value collection). Another syntax option that accesses information in an object by its property/key uses the square-brackets `[ ]`, such as  `me["first"]`.
+
+### Value Type Determination
+
+For distinguishing values, the `typeof` operator tells you its built-in type, if primitive, or `"object"` otherwise:
+
+```js
+typeof 42;                  // "number"
+typeof "abc";               // "string"
+typeof true;                // "boolean"
+typeof undefined;           // "undefined"
+typeof null;                // "object" -- oops, bug!
+typeof { "a": 1 };          // "object"
+typeof [1,2,3];             // "object"
+typeof function hello(){};  // "function"
+```
+
+| WARNING: |
+| :--- |
+| `typeof null` unfortunately returns `"object"` instead of the expected `"null"`. Also, `typeof` returns the specific `"function"` for functions, but not the expected `"array"` for arrays. |
+
+Converting from one value type to another, such as from string to number, is referred to in JS as "coercion." We'll cover this in more detail later in this chapter.
+
+Primitive values and object values behave differently when they're assigned or passed around. We'll cover these details in Appendix A, "Values vs References."
+
+## Declaring and Using Variables
+
+To be explicit about something that may not have been obvious in the previous section: in JS programs, values can either appear as literal values (as many of the preceding examples illustrate), or they can be held in variables; think of variables as just containers for values.
+
+Variables have to be declared (created) to be used. There are various syntax forms that declare variables (aka, "identifiers"), and each form has different implied behaviors.
+
+For example, consider the `var` statement:
+
+```js
+var myName = "Kyle";
+var age;
+```
+
+The `var` keyword declares a variable to be used in that part of the program, and optionally allows an initial assignment of a value.
+
+Another similar keyword is `let`:
+
+```js
+let myName = "Kyle";
+let age;
+```
+
+The `let` keyword has some differences to `var`, with the most obvious being that `let` allows a more limited access to the variable than `var`. This is called "block scoping" as opposed to regular or function scoping.
+
+Consider:
+
+```js
+var adult = true;
+
+if (adult) {
+    var myName = "Kyle";
+    let age = 39;
+    console.log("Shhh, this is a secret!");
+}
+
+console.log(myName);
+// Kyle
+
+console.log(age);
+// Error!
+```
+
+The attempt to access `age` outside of the `if` statement results in an error, because `age` was block-scoped to the `if`, whereas `myName` was not.
+
+Block-scoping is very useful for limiting how widespread variable declarations are in our programs, which helps prevent accidental overlap of their names.
+
+But `var` is still useful in that it communicates "this variable will be seen by a wider scope (of the whole function)". Both declaration forms can be appropriate in any given part of a program, depending on the circumstances.
+
+| NOTE: |
+| :--- |
+| It's very common to suggest that `var` should be avoided in favor of `let` (or `const`!), generally because of perceived confusion over how the scoping behavior of `var` has worked since the beginning of JS. I believe this to be overly restrictive advice and ultimately unhelpful. It's assuming you are unable to learn and use a feature properly in combination with other features. I believe you *can* and *should* learn any features available, and use them where appropriate! |
+
+A third declaration form is `const`. It's like `let` but has an additional limitation that it must be given a value at the moment it's declared, and cannot be re-assigned a different value later.
+
+Consider:
+
+```js
+const myBirthday = true;
+let age = 39;
+
+if (myBirthday) {
+    age = age + 1;    // OK!
+    myBirthday = false;  // Error!
+}
+```
+
+The `myBirthday` constant is not allowed to be re-assigned.
+
+`const` declared variables are not "unchangeable", they just cannot be re-assigned. It's ill-advised to use `const` with object values, because those values can still be changed even though the variable can't be re-assigned. This leads to potential confusion down the line, so I think it's wise to avoid situations like:
+
+```js
+const actors = [
+    "Morgan Freeman", "Jennifer Aniston"
+];
+
+actors[2] = "Tom Cruise";   // OK :(
+actors = [];                // Error!
+```
+
+The best semantic use of a `const` is when you have a simple primitive value that you want to give a useful name to, such as using `myBirthday` instead of `true`. This makes programs easier to read.
+
+| TIP: |
+| :--- |
+| If you stick to using `const` only with primitive values, you avoid any confusion of re-assignment (not allowed) vs. mutation (allowed)! That's the safest and best way to use `const`. |
+
+Besides `var` / `let` / `const`, there are other syntactic forms that declare identifiers (variables) in various scopes. For example:
+
+```js
+function hello(myName) {
+    console.log(`Hello, ${ myName }.`);
+}
+
+hello("Kyle");
+// Hello, Kyle.
+```
+
+The identifier `hello` is created in the outer scope, and it's also automatically associated so that it references the function. But the named parameter `myName` is created only inside the function, and thus is only accessible inside that function's scope. `hello` and `myName` generally behave as `var`-declared.
+
+Another syntax that declares a variable is a `catch` clause:
+
+```js
+try {
+    someError();
+}
+catch (err) {
+    console.log(err);
+}
+```
+
+The `err` is a block-scoped variable that exists only inside the `catch` clause, as if it had been declared with `let`.
+
+## Functions
+
+The word "function" has a variety of meanings in programming. For example, in the world of Functional Programming, "function" has a precise mathematical definition and implies a strict set of rules to abide by.
+
+In JS, we should consider "function" to take the broader meaning of another related term: "procedure." A procedure is a collection of statements that can be invoked one or more times, may be provided some inputs, and may give back one or more outputs.
+
+From the early days of JS, function definition looked like:
+
+```js
+function awesomeFunction(coolThings) {
+    // ..
+    return amazingStuff;
+}
+```
+
+This is called a function declaration because it appears as a statement by itself, not as an expression in another statement. The association between the identifier `awesomeFunction` and the function value happens during the compile phase of the code, before that code is executed.
+
+In contrast to a function declaration statement, a function expression can be defined and assigned like this:
+
+```js
+// let awesomeFunction = ..
+// const awesomeFunction = ..
+var awesomeFunction = function(coolThings) {
+    // ..
+    return amazingStuff;
+};
+```
+
+This function is an expression that is assigned to the variable `awesomeFunction`. Different from the function declaration form, a function expression is not associated with its identifier until that statement during runtime.
+
+It's extremely important to note that in JS, functions are values that can be assigned (as shown in this snippet) and passed around. In fact, JS functions are a special type of the object value type. Not all languages treat functions as values, but it's essential for a language to support the functional programming pattern, as JS does.
+
+JS functions can receive parameter input:
+
+```js
+function greeting(myName) {
+    console.log(`Hello, ${ myName }!`);
+}
+
+greeting("Kyle");   // Hello, Kyle!
+```
+
+In this snippet, `myName` is called a parameter, which acts as a local variable inside the function. Functions can be defined to receive any number of parameters, from none upward, as you see fit. Each parameter is assigned the argument value that you pass in that position (`"Kyle"`, here) of the call.
+
+Functions also can return values using the `return` keyword:
+
+```js
+function greeting(myName) {
+    return `Hello, ${ myName }!`;
+}
+
+var msg = greeting("Kyle");
+
+console.log(msg);   // Hello, Kyle!
+```
+
+You can only `return` a single value, but if you have more values to return, you can wrap them up into a single object/array.
+
+Since functions are values, they can be assigned as properties on objects:
+
+```js
+var whatToSay = {
+    greeting() {
+        console.log("Hello!");
+    },
+    question() {
+        console.log("What's your name?");
+    },
+    answer() {
+        console.log("My name is Kyle.");
+    }
+};
+
+whatToSay.greeting();
+// Hello!
+```
+
+In this snippet, references to three functions (`greeting()`, `question()`, and `answer()`) are included in the object held by `whatToSay`. Each function can be called by accessing the property to retrieve the function reference value. Compare this straightforward style of defining functions on an object to the more sophisticated `class` syntax discussed later in this chapter.
+
+There are many varied forms that `function`s take in JS. We dig into these variations in Appendix A, "So Many Function Forms."
+
+## Comparisons
+
+Making decisions in programs requires comparing values to determine their identity and relationship to each other. JS has several mechanisms to enable value comparison, so let's take a closer look at them.
+
+### Equal...ish
+
+The most common comparison in JS programs asks the question, "Is this X value *the same as* that Y value?" What exactly does "the same as" really mean to JS, though?
+
+For ergonomic and historical reasons, the meaning is more complicated than the obvious *exact identity* sort of matching. Sometimes an equality comparison intends *exact* matching, but other times the desired comparison is a bit broader, allowing *closely similar* or *interchangeable* matching. In other words, we must be aware of the nuanced differences between an **equality** comparison and an **equivalence** comparison.
+
+If you've spent any time working with and reading about JS, you've certainly seen the so-called "triple-equals" `===` operator, also described as the "strict equality" operator. That seems rather straightforward, right? Surely, "strict" means strict, as in narrow and *exact*.
+
+Not *exact*ly.
+
+Yes, most values participating in an `===` equality comparison will fit with that *exact same* intuition. Consider some examples:
+
+```js
+3 === 3.0;              // true
+"yes" === "yes";        // true
+null === null;          // true
+false === false;        // true
+
+42 === "42";            // false
+"hello" === "Hello";    // false
+true === 1;             // false
+0 === null;             // false
+"" === null;            // false
+null === undefined;     // false
+```
+
+| NOTE: |
+| :--- |
+| Another way `===`'s equality comparison is often described is, "checking both the value and the type". In several of the examples we've looked at so far, like `42 === "42"`, the *type* of both values (number, string, etc.) does seem to be the distinguishing factor. There's more to it than that, though. **All** value comparisons in JS consider the type of the values being compared, not *just* the `===` operator. Specifically, `===` disallows any sort of type conversion (aka, "coercion") in its comparison, where other JS comparisons *do* allow coercion. |
+
+But the `===` operator does have some nuance to it, a fact many JS developers gloss over, to their detriment. The `===` operator is designed to *lie* in two cases of special values: `NaN` and `-0`. Consider:
+
+```js
+NaN === NaN;            // false
+0 === -0;               // true
+```
+
+In the case of `NaN`, the `===` operator *lies* and says that an occurrence of `NaN` is not equal to another `NaN`. In the case of `-0` (yes, this is a real, distinct value you can use intentionally in your programs!), the `===` operator *lies* and says it's equal to the regular `0` value.
+
+Since the *lying* about such comparisons can be bothersome, it's best to avoid using `===` for them. For `NaN` comparisons, use the `Number.isNaN(..)` utility, which does not *lie*. For `-0` comparison, use the `Object.is(..)` utility, which also does not *lie*. `Object.is(..)` can also be used for non-*lying* `NaN` checks, if you prefer. Humorously, you could think of `Object.is(..)` as the "quadruple-equals" `====`, the really-really-strict comparison!
+
+There are deeper historical and technical reasons for these *lies*, but that doesn't change the fact that `===` is not actually *strictly exactly equal* comparison, in the *strictest* sense.
+
+The story gets even more complicated when we consider comparisons of object values (non-primitives). Consider:
+
+```js
+[ 1, 2, 3 ] === [ 1, 2, 3 ];    // false
+{ a: 42 } === { a: 42 }         // false
+(x => x * 2) === (x => x * 2)   // false
+```
+
+What's going on here?
+
+It may seem reasonable to assume that an equality check considers the *nature* or *contents* of the value; after all, `42 === 42` considers the actual `42` value and compares it. But when it comes to objects, a content-aware comparison is generally referred to as "structural equality."
+
+JS does not define `===` as *structural equality* for object values. Instead, `===` uses *identity equality* for object values.
+
+In JS, all object values are held by reference (see "Values vs References" in Appendix A), are assigned and passed by reference-copy, **and** to our current discussion, are compared by reference (identity) equality. Consider:
+
+```js
+var x = [ 1, 2, 3 ];
+
+// assignment is by reference-copy, so
+// y references the *same* array as x,
+// not another copy of it.
+var y = x;
+
+y === x;              // true
+y === [ 1, 2, 3 ];    // false
+x === [ 1, 2, 3 ];    // false
+```
+
+In this snippet, `y === x` is true because both variables hold a reference to the same initial array. But the `=== [1,2,3]` comparisons both fail because `y` and `x`, respectively, are being compared to new *different* arrays `[1,2,3]`. The array structure and contents don't matter in this comparison, only the **reference identity**.
+
+JS does not provide a mechanism for structural equality comparison of object values, only reference identity comparison. To do structural equality comparison, you'll need to implement the checks yourself.
+
+But beware, it's more complicated than you'll assume. For example, how might you determine if two function references are "structurally equivalent"? Even stringifying to compare their source code text wouldn't take into account things like closure. JS doesn't provide structural equality comparison because it's almost intractable to handle all the corner cases!
+
+### Coercive Comparisons
+
+Coercion means a value of one type being converted to its respective representation in another type (to whatever extent possible). As we'll discuss in Chapter 4, coercion is a core pillar of the JS language, not some optional feature that can reasonably be avoided.
+
+But where coercion meets comparison operators (like equality), confusion and frustration unfortunately crop up more often than not.
+
+Few JS features draw more ire in the broader JS community than the `==` operator, generally referred to as the "loose equality" operator. The majority of all writing and public discourse on JS condemns this operator as poorly designed and dangerous/bug-ridden when used in JS programs. Even the creator of the language himself, Brendan Eich, has lamented how it was designed as a big mistake.
+
+From what I can tell, most of this frustration comes from a pretty short list of confusing corner cases, but a deeper problem is the extremely widespread misconception that it performs its comparisons without considering the types of its compared values.
+
+The `==` operator performs an equality comparison similarly to how the `===` performs it. In fact, both operators consider the type of the values being compared. And if the comparison is between the same value type, both `==` and `===` **do exactly the same thing, no difference whatsoever.**
+
+If the value types being compared are different, the `==` differs from `===` in that it allows coercion before the comparison. In other words, they both want to compare values of like types, but `==` allows type conversions *first*, and once the types have been converted to be the same on both sides, then `==` does the same thing as `===`. Instead of "loose equality," the `==` operator should be described as "coercive equality."
+
+Consider:
+
+```js
+42 == "42";             // true
+1 == true;              // true
+```
+
+In both comparisons, the value types are different, so the `==` causes the non-number values (`"42"` and `true`) to be converted to numbers (`42` and `1`, respectively) before the comparisons are made.
+
+Just being aware of this nature of `==`—that it prefers primitive numeric comparisons—helps you avoid most of the troublesome corner cases, such as staying away from a gotchas like `"" == 0` or `0 == false`.
+
+You may be thinking, "Oh, well, I will just always avoid any coercive equality comparison (using `===` instead) to avoid those corner cases"! Eh, sorry, that's not quite as likely as you would hope.
+
+There's a pretty good chance that you'll use relational comparison operators like `<`, `>` (and even `<=` and `>=`).
+
+Just like `==`, these operators will perform as if they're "strict" if the types being relationally compared already match, but they'll allow coercion first (generally, to numbers) if the types differ.
+
+Consider:
+
+```js
+var arr = [ "1", "10", "100", "1000" ];
+for (let i = 0; i < arr.length && arr[i] < 500; i++) {
+    // will run 3 times
+}
+```
+
+The `i < arr.length` comparison is "safe" from coercion because `i` and `arr.length` are always numbers. The `arr[i] < 500` invokes coercion, though, because the `arr[i]` values are all strings. Those comparisons thus become `1 < 500`, `10 < 500`, `100 < 500`, and `1000 < 500`. Since that fourth one is false, the loop stops after its third iteration.
+
+These relational operators typically use numeric comparisons, except in the case where **both** values being compared are already strings; in this case, they use alphabetical (dictionary-like) comparison of the strings:
+
+```js
+var x = "10";
+var y = "9";
+
+x < y;      // true, watch out!
+```
+
+There's no way to get these relational operators to avoid coercion, other than to just never use mismatched types in the comparisons. That's perhaps admirable as a goal, but it's still pretty likely you're going to run into a case where the types *may* differ.
+
+The wiser approach is not to avoid coercive comparisons, but to embrace and learn their ins and outs.
+
+Coercive comparisons crop up in other places in JS, such as conditionals (`if`, etc.), which we'll revisit in Appendix A, "Coercive Conditional Comparison."
+
+## How We Organize in JS
+
+Two major patterns for organizing code (data and behavior) are used broadly across the JS ecosystem: classes and modules. These patterns are not mutually exclusive; many programs can and do use both. Other programs will stick with just one pattern, or even neither!
+
+In some respects, these patterns are very different. But interestingly, in other ways, they're just different sides of the same coin. Being proficient in JS requires understanding both patterns and where they are appropriate (and not!).
+
+### Classes
+
+The terms "object-oriented," "class-oriented," and "classes" are all very loaded full of detail and nuance; they're not universal in definition.
+
+We will use a common and somewhat traditional definition here, the one most likely familiar to those with backgrounds in "object-oriented" languages like C++ and Java.
+
+A class in a program is a definition of a "type" of custom data structure that includes both data and behaviors that operate on that data. Classes define how such a data structure works, but classes are not themselves concrete values. To get a concrete value that you can use in the program, a class must be *instantiated* (with the `new` keyword) one or more times.
+
+Consider:
+
+```js
+class Page {
+    constructor(text) {
+        this.text = text;
+    }
+
+    print() {
+        console.log(this.text);
+    }
+}
+
+class Notebook {
+    constructor() {
+        this.pages = [];
+    }
+
+    addPage(text) {
+        var page = new Page(text);
+        this.pages.push(page);
+    }
+
+    print() {
+        for (let page of this.pages) {
+            page.print();
+        }
+    }
+}
+
+var mathNotes = new Notebook();
+mathNotes.addPage("Arithmetic: + - * / ...");
+mathNotes.addPage("Trigonometry: sin cos tan ...");
+
+mathNotes.print();
+// ..
+```
+
+In the `Page` class, the data is a string of text stored in a `this.text` member property. The behavior is `print()`, a method that dumps the text to the console.
+
+For the `Notebook` class, the data is an array of `Page` instances. The behavior is `addPage(..)`, a method that instantiates new `Page` pages and adds them to the list, as well as `print()` (which prints out all the pages in the notebook).
+
+The statement `mathNotes = new Notebook()` creates an instance of the `Notebook` class, and `page = new Page(text)` is where instances of the `Page` class are created.
+
+Behavior (methods) can only be called on instances (not the classes themselves), such as `mathNotes.addPage(..)` and `page.print()`.
+
+The `class` mechanism allows packaging data (`text` and `pages`) to be organized together with their behaviors (e.g., `addPage(..)` and `print()`). The same program could have been built without any `class` definitions, but it would likely have been much less organized, harder to read and reason about, and more susceptible to bugs and subpar maintenance.
+
+#### Class Inheritance
+
+Another aspect inherent to traditional "class-oriented" design, though a bit less commonly used in JS, is "inheritance" (and "polymorphism"). Consider:
+
+```js
+class Publication {
+    constructor(title,author,pubDate) {
+        this.title = title;
+        this.author = author;
+        this.pubDate = pubDate;
+    }
+
+    print() {
+        console.log(`
+            Title: ${ this.title }
+            By: ${ this.author }
+            ${ this.pubDate }
+        `);
+    }
+}
+```
+
+This `Publication` class defines a set of common behavior that any publication might need.
+
+Now let's consider more specific types of publication, like `Book` and `BlogPost`:
+
+```js
+class Book extends Publication {
+    constructor(bookDetails) {
+        super(
+            bookDetails.title,
+            bookDetails.author,
+            bookDetails.publishedOn
+        );
+        this.publisher = bookDetails.publisher;
+        this.ISBN = bookDetails.ISBN;
+    }
+
+    print() {
+        super.print();
+        console.log(`
+            Publisher: ${ this.publisher }
+            ISBN: ${ this.ISBN }
+        `);
+    }
+}
+
+class BlogPost extends Publication {
+    constructor(title,author,pubDate,URL) {
+        super(title,author,pubDate);
+        this.URL = URL;
+    }
+
+    print() {
+        super.print();
+        console.log(this.URL);
+    }
+}
+```
+
+Both `Book` and `BlogPost` use the `extends` clause to *extend* the general definition of `Publication` to include additional behavior. The `super(..)` call in each constructor delegates to the parent `Publication` class's constructor for its initialization work, and then they do more specific things according to their respective publication type (aka, "sub-class" or "child class").
+
+Now consider using these child classes:
+
+```js
+var YDKJS = new Book({
+    title: "You Don't Know JS",
+    author: "Kyle Simpson",
+    publishedOn: "June 2014",
+    publisher: "O'Reilly",
+    ISBN: "123456-789"
+});
+
+YDKJS.print();
+// Title: You Don't Know JS
+// By: Kyle Simpson
+// June 2014
+// Publisher: O'Reilly
+// ISBN: 123456-789
+
+var forAgainstLet = new BlogPost(
+    "For and against let",
+    "Kyle Simpson",
+    "October 27, 2014",
+    "https://davidwalsh.name/for-and-against-let"
+);
+
+forAgainstLet.print();
+// Title: For and against let
+// By: Kyle Simpson
+// October 27, 2014
+// https://davidwalsh.name/for-and-against-let
+```
+
+Notice that both child class instances have a `print()` method, which was an override of the *inherited* `print()` method from the parent `Publication` class. Each of those overridden child class `print()` methods call `super.print()` to invoke the inherited version of the `print()` method.
+
+The fact that both the inherited and overridden methods can have the same name and co-exist is called *polymorphism*.
+
+Inheritance is a powerful tool for organizing data/behavior in separate logical units (classes), but allowing the child class to cooperate with the parent by accessing/using its behavior and data.
+
+### Modules
+
+The module pattern has essentially the same goal as the class pattern, which is to group data and behavior together into logical units. Also like classes, modules can "include" or "access" the data and behaviors of other modules, for cooperation's sake.
+
+But modules have some important differences from classes. Most notably, the syntax is entirely different.
+
+#### Classic Modules
+
+ES6 added a module syntax form to native JS syntax, which we'll look at in a moment. But from the early days of JS, modules was an important and common pattern that was leveraged in countless JS programs, even without a dedicated syntax.
+
+The key hallmarks of a *classic module* are an outer function (that runs at least once), which returns an "instance" of the module with one or more functions exposed that can operate on the module instance's internal (hidden) data.
+
+Because a module of this form is *just a function*, and calling it produces an "instance" of the module, another description for these functions is "module factories".
+
+Consider the classic module form of the earlier `Publication`, `Book`, and `BlogPost` classes:
+
+```js
+function Publication(title,author,pubDate) {
+    var publicAPI = {
+        print() {
+            console.log(`
+                Title: ${ title }
+                By: ${ author }
+                ${ pubDate }
+            `);
+        }
+    };
+
+    return publicAPI;
+}
+
+function Book(bookDetails) {
+    var pub = Publication(
+        bookDetails.title,
+        bookDetails.author,
+        bookDetails.publishedOn
+    );
+
+    var publicAPI = {
+        print() {
+            pub.print();
+            console.log(`
+                Publisher: ${ bookDetails.publisher }
+                ISBN: ${ bookDetails.ISBN }
+            `);
+        }
+    };
+
+    return publicAPI;
+}
+
+function BlogPost(title,author,pubDate,URL) {
+    var pub = Publication(title,author,pubDate);
+
+    var publicAPI = {
+        print() {
+            pub.print();
+            console.log(URL);
+        }
+    };
+
+    return publicAPI;
+}
+```
+
+Comparing these forms to the `class` forms, there are more similarities than differences.
+
+The `class` form stores methods and data on an object instance, which must be accessed with the `this.` prefix. With modules, the methods and data are accessed as identifier variables in scope, without any `this.` prefix.
+
+With `class`, the "API" of an instance is implicit in the class definition—also, all data and methods are public. With the module factory function, you explicitly create and return an object with any publicly exposed methods, and any data or other unreferenced methods remain private inside the factory function.
+
+There are other variations to this factory function form that are quite common across JS, even in 2020; you may run across these forms in different JS programs: AMD (Asynchronous Module Definition), UMD (Universal Module Definition), and CommonJS (classic Node.js-style modules). The variations are minor (not quite compatible). However, all of these forms rely on the same basic principles.
+
+Consider also the usage (aka, "instantiation") of these module factory functions:
+
+```js
+var YDKJS = Book({
+    title: "You Don't Know JS",
+    author: "Kyle Simpson",
+    publishedOn: "June 2014",
+    publisher: "O'Reilly",
+    ISBN: "123456-789"
+});
+
+YDKJS.print();
+// Title: You Don't Know JS
+// By: Kyle Simpson
+// June 2014
+// Publisher: O'Reilly
+// ISBN: 123456-789
+
+var forAgainstLet = BlogPost(
+    "For and against let",
+    "Kyle Simpson",
+    "October 27, 2014",
+    "https://davidwalsh.name/for-and-against-let"
+);
+
+forAgainstLet.print();
+// Title: For and against let
+// By: Kyle Simpson
+// October 27, 2014
+// https://davidwalsh.name/for-and-against-let
+```
+
+The only observable difference here is the lack of using `new`, calling the module factories as normal functions.
+
+#### ES Modules
+
+ES modules (ESM), introduced to the JS language in ES6, are meant to serve much the same spirit and purpose as the existing *classic modules* just described, especially taking into account important variations and use cases from AMD, UMD, and CommonJS.
+
+The implementation approach does, however, differ significantly.
+
+First, there's no wrapping function to *define* a module. The wrapping context is a file. ESMs are always file-based; one file, one module.
+
+Second, you don't interact with a module's "API" explicitly, but rather use the `export` keyword to add a variable or method to its public API definition. If something is defined in a module but not `export`ed, then it stays hidden (just as with *classic modules*).
+
+Third, and maybe most noticeably different from previously discussed patterns, you don't "instantiate" an ES module, you just `import` it to use its single instance. ESMs are, in effect, "singletons," in that there's only one instance ever created, at first `import` in your program, and all other `import`s just receive a reference to that same single instance. If your module needs to support multiple instantiations, you have to provide a *classic module-style* factory function on your ESM definition for that purpose.
+
+In our running example, we do assume multiple-instantiation, so these following snippets will mix both ESM and *classic modules*.
+
+Consider the file `publication.js`:
+
+```js
+function printDetails(title,author,pubDate) {
+    console.log(`
+        Title: ${ title }
+        By: ${ author }
+        ${ pubDate }
+    `);
+}
+
+export function create(title,author,pubDate) {
+    var publicAPI = {
+        print() {
+            printDetails(title,author,pubDate);
+        }
+    };
+
+    return publicAPI;
+}
+```
+
+To import and use this module, from another ES module like `blogpost.js`:
+
+```js
+import { create as createPub } from "publication.js";
+
+function printDetails(pub,URL) {
+    pub.print();
+    console.log(URL);
+}
+
+export function create(title,author,pubDate,URL) {
+    var pub = createPub(title,author,pubDate);
+
+    var publicAPI = {
+        print() {
+            printDetails(pub,URL);
+        }
+    };
+
+    return publicAPI;
+}
+```
+
+And finally, to use this module, we import into another ES module like `main.js`:
+
+```js
+import { create as newBlogPost } from "blogpost.js";
+
+var forAgainstLet = newBlogPost(
+    "For and against let",
+    "Kyle Simpson",
+    "October 27, 2014",
+    "https://davidwalsh.name/for-and-against-let"
+);
+
+forAgainstLet.print();
+// Title: For and against let
+// By: Kyle Simpson
+// October 27, 2014
+// https://davidwalsh.name/for-and-against-let
+```
+
+| NOTE: |
+| :--- |
+| The `as newBlogPost` clause in the `import` statement is optional; if omitted, a top-level function just named `create(..)` would be imported. In this case, I'm renaming it for readability's sake; its more generic factory name of `create(..)` becomes more semantically descriptive of its purpose as `newBlogPost(..)`. |
+
+As shown, ES modules can use *classic modules* internally if they need to support multiple-instantiation. Alternatively, we could have exposed a `class` from our module instead of a `create(..)` factory function, with generally the same outcome. However, since you're already using ESM at that point, I'd recommend sticking with *classic modules* instead of `class`.
+
+If your module only needs a single instance, you can skip the extra layers of complexity: `export` its public methods directly.
+
+## The Rabbit Hole Deepens
+
+As promised at the top of this chapter, we just glanced over a wide surface area of the main parts of the JS language. Your head may still be spinning, but that's entirely natural after such a firehose of information!
+
+Even with just this "brief" survey of JS, we covered or hinted at a ton of details you should carefully consider and ensure you are comfortable with. I'm serious when I suggest: re-read this chapter, maybe several times.
+
+In the next chapter, we're going to dig much deeper into some important aspects of how JS works at its core. But before you follow that rabbit hole deeper, make sure you've taken adequate time to fully digest what we've just covered here.
+
+
+
+
+# You Don't Know JS Yet: Get Started - 2nd Edition
+# Chapter 3: Digging to the Roots of JS
+
+If you've read Chapters 1 and 2, and taken the time to digest and percolate, you're hopefully starting to *get* JS a little more. If you skipped/skimmed them (especially Chapter 2), I recommend going back to spend some more time with that material.
+
+In Chapter 2, we surveyed syntax, patterns, and behaviors at a high level. In this chapter, our attention shifts to some of the lower-level root characteristics of JS that underpin virtually every line of code we write.
+
+Be aware: this chapter digs much deeper than you're likely used to thinking about a programming language. My goal is to help you appreciate the core of how JS works, what makes it tick. This chapter should begin to answer some of the "Why?" questions that may be cropping up as you explore JS. However, this material is still not an exhaustive exposition of the language; that's what the rest of the book series is for! Our goal here is still just to *get started*, and become more comfortable with, the *feel* of JS, how it ebbs and flows.
+
+Don't run so quickly through this material that you get lost in the weeds. As I've said a dozen times already, **take your time**. Even still, you'll probably finish this chapter with remaining questions. That's OK, because there's a whole book series ahead of you to keep exploring!
+
+## Iteration
+
+Since programs are essentially built to process data (and make decisions on that data), the patterns used to step through the data have a big impact on the program's readability.
+
+The iterator pattern has been around for decades, and suggests a "standardized" approach to consuming data from a source one *chunk* at a time. The idea is that it's more common and helpful to iterate the data source—to progressively handle the collection of data by processing the first part, then the next, and so on, rather than handling the entire set all at once.
+
+Imagine a data structure that represents a relational database `SELECT` query, which typically organizes the results as rows. If this query had only one or a couple of rows, you could handle the entire result set at once, and assign each row to a local variable, and perform whatever operations on that data that were appropriate.
+
+But if the query has 100 or 1,000 (or more!) rows, you'll need iterative processing to deal with this data (typically, a loop).
+
+The iterator pattern defines a data structure called an "iterator" that has a reference to an underlying data source (like the query result rows), which exposes a method like `next()`. Calling `next()` returns the next piece of data (i.e., a "record" or "row" from a database query).
+
+You don't always know how many pieces of data that you will need to iterate through, so the pattern typically indicates completion by some special value or exception once you iterate through the entire set and *go past the end*.
+
+The importance of the iterator pattern is in adhering to a *standard* way of processing data iteratively, which creates cleaner and easier to understand code, as opposed to having every data structure/source define its own custom way of handling its data.
+
+After many years of various JS community efforts around mutually agreed-upon iteration techniques, ES6 standardized a specific protocol for the iterator pattern directly in the language. The protocol defines a `next()` method whose return is an object called an *iterator result*; the object has `value` and `done` properties, where `done` is a boolean that is `false` until the iteration over the underlying data source is complete.
+
+### Consuming Iterators
+
+With the ES6 iteration protocol in place, it's workable to consume a data source one value at a time, checking after each `next()` call for `done` to be `true` to stop the iteration. But this approach is rather manual, so ES6 also included several mechanisms (syntax and APIs) for standardized consumption of these iterators.
+
+One such mechanism is the `for..of` loop:
+
+```js
+// given an iterator of some data source:
+var it = /* .. */;
+
+// loop over its results one at a time
+for (let val of it) {
+    console.log(`Iterator value: ${ val }`);
+}
+// Iterator value: ..
+// Iterator value: ..
+// ..
+```
+
+| NOTE: |
+| :--- |
+| We'll omit the manual loop equivalent here, but it's definitely less readable than the `for..of` loop! |
+
+Another mechanism that's often used for consuming iterators is the `...` operator. This operator actually has two symmetrical forms: *spread* and *rest* (or *gather*, as I prefer). The *spread* form is an iterator-consumer.
+
+To *spread* an iterator, you have to have *something* to spread it into. There are two possibilities in JS: an array or an argument list for a function call.
+
+An array spread:
+
+```js
+// spread an iterator into an array,
+// with each iterated value occupying
+// an array element position.
+var vals = [ ...it ];
+```
+
+A function call spread:
+
+```js
+// spread an iterator into a function,
+// call with each iterated value
+// occupying an argument position.
+doSomethingUseful( ...it );
+```
+
+In both cases, the iterator-spread form of `...` follows the iterator-consumption protocol (the same as the `for..of` loop) to retrieve all available values from an iterator and place (aka, spread) them into the receiving context (array, argument list).
+
+### Iterables
+
+The iterator-consumption protocol is technically defined for consuming *iterables*; an iterable is a value that can be iterated over.
+
+The protocol automatically creates an iterator instance from an iterable, and consumes *just that iterator instance* to its completion. This means a single iterable could be consumed more than once; each time, a new iterator instance would be created and used.
+
+So where do we find iterables?
+
+ES6 defined the basic data structure/collection types in JS as iterables. This includes strings, arrays, maps, sets, and others.
+
+Consider:
+
+```js
+// an array is an iterable
+var arr = [ 10, 20, 30 ];
+
+for (let val of arr) {
+    console.log(`Array value: ${ val }`);
+}
+// Array value: 10
+// Array value: 20
+// Array value: 30
+```
+
+Since arrays are iterables, we can shallow-copy an array using iterator consumption via the `...` spread operator:
+
+```js
+var arrCopy = [ ...arr ];
+```
+
+We can also iterate the characters in a string one at a time:
+
+```js
+var greeting = "Hello world!";
+var chars = [ ...greeting ];
+
+chars;
+// [ "H", "e", "l", "l", "o", " ",
+//   "w", "o", "r", "l", "d", "!" ]
+```
+
+A `Map` data structure uses objects as keys, associating a value (of any type) with that object. Maps have a different default iteration than seen here, in that the iteration is not just over the map's values but instead its *entries*. An *entry* is a tuple (2-element array) including both a key and a value.
+
+Consider:
+
+```js
+// given two DOM elements, `btn1` and `btn2`
+
+var buttonNames = new Map();
+buttonNames.set(btn1,"Button 1");
+buttonNames.set(btn2,"Button 2");
+
+for (let [btn,btnName] of buttonNames) {
+    btn.addEventListener("click",function onClick(){
+        console.log(`Clicked ${ btnName }`);
+    });
+}
+```
+
+In the `for..of` loop over the default map iteration, we use the `[btn,btnName]` syntax (called "array destructuring") to break down each consumed tuple into the respective key/value pairs (`btn1` / `"Button 1"` and `btn2` / `"Button 2"`).
+
+Each of the built-in iterables in JS expose a default iteration, one which likely matches your intuition. But you can also choose a more specific iteration if necessary. For example, if we want to consume only the values of the above `buttonNames` map, we can call `values()` to get a values-only iterator:
+
+```js
+for (let btnName of buttonNames.values()) {
+    console.log(btnName);
+}
+// Button 1
+// Button 2
+```
+
+Or if we want the index *and* value in an array iteration, we can make an entries iterator with the `entries()` method:
+
+```js
+var arr = [ 10, 20, 30 ];
+
+for (let [idx,val] of arr.entries()) {
+    console.log(`[${ idx }]: ${ val }`);
+}
+// [0]: 10
+// [1]: 20
+// [2]: 30
+```
+
+For the most part, all built-in iterables in JS have three iterator forms available: keys-only (`keys()`), values-only (`values()`), and entries (`entries()`).
+
+Beyond just using built-in iterables, you can also ensure your own data structures adhere to the iteration protocol; doing so means you opt into the ability to consume your data with `for..of` loops and the `...` operator. "Standardizing" on this protocol means code that is overall more readily recognizable and readable.
+
+| NOTE: |
+| :--- |
+| You may have noticed a nuanced shift that occurred in this discussion. We started by talking about consuming **iterators**, but then switched to talking about iterating over **iterables**. The iteration-consumption protocol expects an *iterable*, but the reason we can provide a direct *iterator* is that an iterator is just an iterable of itself! When creating an iterator instance from an existing iterator, the iterator itself is returned. |
+
+## Closure
+
+Perhaps without realizing it, almost every JS developer has made use of closure. In fact, closure is one of the most pervasive programming functionalities across a majority of languages. It might even be as important to understand as variables or loops; that's how fundamental it is.
+
+Yet it feels kind of hidden, almost magical. And it's often talked about in either very abstract or very informal terms, which does little to help us nail down exactly what it is.
+
+We need to be able to recognize where closure is used in programs, as the presence or lack of closure is sometimes the cause of bugs (or even the cause of performance issues).
+
+So let's define closure in a pragmatic and concrete way:
+
+> Closure is when a function remembers and continues to access variables from outside its scope, even when the function is executed in a different scope.
+
+We see two definitional characteristics here. First, closure is part of the nature of a function. Objects don't get closures, functions do. Second, to observe a closure, you must execute a function in a different scope than where that function was originally defined.
+
+Consider:
+
+```js
+function greeting(msg) {
+    return function who(name) {
+        console.log(`${ msg }, ${ name }!`);
+    };
+}
+
+var hello = greeting("Hello");
+var howdy = greeting("Howdy");
+
+hello("Kyle");
+// Hello, Kyle!
+
+hello("Sarah");
+// Hello, Sarah!
+
+howdy("Grant");
+// Howdy, Grant!
+```
+
+First, the `greeting(..)` outer function is executed, creating an instance of the inner function `who(..)`; that function closes over the variable `msg`, which is the parameter from the outer scope of `greeting(..)`. When that inner function is returned, its reference is assigned to the `hello` variable in the outer scope. Then we call `greeting(..)` a second time, creating a new inner function instance, with a new closure over a new `msg`, and return that reference to be assigned to `howdy`.
+
+When the `greeting(..)` function finishes running, normally we would expect all of its variables to be garbage collected (removed from memory). We'd expect each `msg` to go away, but they don't. The reason is closure. Since the inner function instances are still alive (assigned to `hello` and `howdy`, respectively), their closures are still preserving the `msg` variables.
+
+These closures are not a snapshot of the `msg` variable's value; they are a direct link and preservation of the variable itself. That means closure can actually observe (or make!) updates to these variables over time.
+
+```js
+function counter(step = 1) {
+    var count = 0;
+    return function increaseCount(){
+        count = count + step;
+        return count;
+    };
+}
+
+var incBy1 = counter(1);
+var incBy3 = counter(3);
+
+incBy1();       // 1
+incBy1();       // 2
+
+incBy3();       // 3
+incBy3();       // 6
+incBy3();       // 9
+```
+
+Each instance of the inner `increaseCount()` function is closed over both the `count` and `step` variables from its outer `counter(..)` function's scope. `step` remains the same over time, but `count` is updated on each invocation of that inner function. Since closure is over the variables and not just snapshots of the values, these updates are preserved.
+
+Closure is most common when working with asynchronous code, such as with callbacks. Consider:
+
+```js
+function getSomeData(url) {
+    ajax(url,function onResponse(resp){
+        console.log(
+            `Response (from ${ url }): ${ resp }`
+        );
+    });
+}
+
+getSomeData("https://some.url/wherever");
+// Response (from https://some.url/wherever): ...
+```
+
+The inner function `onResponse(..)` is closed over `url`, and thus preserves and remembers it until the Ajax call returns and executes `onResponse(..)`. Even though `getSomeData(..)` finishes right away, the `url` parameter variable is kept alive in the closure for as long as needed.
+
+It's not necessary that the outer scope be a function—it usually is, but not always—just that there be at least one variable in an outer scope accessed from an inner function:
+
+```js
+for (let [idx,btn] of buttons.entries()) {
+    btn.addEventListener("click",function onClick(){
+       console.log(`Clicked on button (${ idx })!`);
+    });
+}
+```
+
+Because this loop is using `let` declarations, each iteration gets new block-scoped (aka, local) `idx` and `btn` variables;  the loop also creates a new inner `onClick(..)` function each time. That inner function closes over `idx`, preserving it for as long as the click handler is set on the `btn`. So when each button is clicked, its handler can print its associated index value, because the handler remembers its respective `idx` variable.
+
+Remember: this closure is not over the value (like `1` or `3`), but over the variable `idx` itself.
+
+Closure is one of the most prevalent and important programming patterns in any language. But that's especially true of JS; it's hard to imagine doing anything useful without leveraging closure in one way or another.
+
+If you're still feeling unclear or shaky about closure, the majority of Book 2, *Scope & Closures* is focused on the topic.
+
+## `this` Keyword
+
+One of JS's most powerful mechanisms is also one of its most misunderstood: the `this` keyword. One common misconception is that a function's `this` refers to the function itself. Because of how `this` works in other languages, another misconception is that `this` points the instance that a method belongs to. Both are incorrect.
+
+As discussed previously, when a function is defined, it is *attached* to its enclosing scope via closure. Scope is the set of rules that controls how references to variables are resolved.
+
+But functions also have another characteristic besides their scope that influences what they can access. This characteristic is best described as an *execution context*, and it's exposed to the function via its `this` keyword.
+
+Scope is static and contains a fixed set of variables available at the moment and location you define a function, but a function's execution *context* is dynamic, entirely dependent on **how it is called** (regardless of where it is defined or even called from).
+
+`this` is not a fixed characteristic of a function based on the function's definition, but rather a dynamic characteristic that's determined each time the function is called.
+
+One way to think about the *execution context* is that it's a tangible object whose properties are made available to a function while it executes. Compare that to scope, which can also be thought of as an *object*; except, the *scope object* is hidden inside the JS engine, it's always the same for that function, and its *properties* take the form of identifier variables available inside the function.
+
+```js
+function classroom(teacher) {
+    return function study() {
+        console.log(
+            `${ teacher } says to study ${ this.topic }`
+        );
+    };
+}
+var assignment = classroom("Kyle");
+```
+
+The outer `classroom(..)` function makes no reference to a `this` keyword, so it's just like any other function we've seen so far. But the inner `study()` function does reference `this`, which makes it a `this`-aware function. In other words, it's a function that is dependent on its *execution context*.
+
+| NOTE: |
+| :--- |
+| `study()` is also closed over the `teacher` variable from its outer scope. |
+
+The inner `study()` function returned by `classroom("Kyle")` is assigned to a variable called `assignment`. So how can `assignment()` (aka `study()`) be called?
+
+```js
+assignment();
+// Kyle says to study undefined  -- Oops :(
+```
+
+In this snippet, we call `assignment()` as a plain, normal function, without providing it any *execution context*.
+
+Since this program is not in strict mode (see Chapter 1, "Strictly Speaking"), context-aware functions that are called **without any context specified** default the context to the global object (`window` in the browser). As there is no global variable named `topic` (and thus no such property on the global object), `this.topic` resolves to `undefined`.
+
+Now consider:
+
+```js
+var homework = {
+    topic: "JS",
+    assignment: assignment
+};
+
+homework.assignment();
+// Kyle says to study JS
+```
+
+A copy of the `assignment` function reference is set as a property on the `homework` object, and then it's called as `homework.assignment()`. That means the `this` for that function call will be the `homework` object. Hence, `this.topic` resolves to `"JS"`.
+
+Lastly:
+
+```js
+var otherHomework = {
+    topic: "Math"
+};
+
+assignment.call(otherHomework);
+// Kyle says to study Math
+```
+
+A third way to invoke a function is with the `call(..)` method, which takes an object (`otherHomework` here) to use for setting the `this` reference for the function call. The property reference `this.topic` resolves to `"Math"`.
+
+The same context-aware function invoked three different ways, gives different answers each time for what object `this` will reference.
+
+The benefit of `this`-aware functions—and their dynamic context—is the ability to more flexibly re-use a single function with data from different objects. A function that closes over a scope can never reference a different scope or set of variables. But a function that has dynamic `this` context awareness can be quite helpful for certain tasks.
+
+## Prototypes
+
+Where `this` is a characteristic of function execution, a prototype is a characteristic of an object, and specifically resolution of a property access.
+
+Think about a prototype as a linkage between two objects; the linkage is hidden behind the scenes, though there are ways to expose and observe it. This prototype linkage occurs when an object is created; it's linked to another object that already exists.
+
+A series of objects linked together via prototypes is called the "prototype chain."
+
+The purpose of this prototype linkage (i.e., from an object B to another object A) is so that accesses against B for properties/methods that B does not have, are *delegated* to A to handle. Delegation of property/method access allows two (or more!) objects to cooperate with each other to perform a task.
+
+Consider defining an object as a normal literal:
+
+```js
+var homework = {
+    topic: "JS"
+};
+```
+
+The `homework` object only has a single property on it: `topic`. However, its default prototype linkage connects to the `Object.prototype` object, which has common built-in methods on it like `toString()` and `valueOf()`, among others.
+
+We can observe this prototype linkage *delegation* from `homework` to `Object.prototype`:
+
+```js
+homework.toString();    // [object Object]
+```
+
+`homework.toString()` works even though `homework` doesn't have a `toString()` method defined; the delegation invokes `Object.prototype.toString()` instead.
+
+### Object Linkage
+
+To define an object prototype linkage, you can create the object using the `Object.create(..)` utility:
+
+```js
+var homework = {
+    topic: "JS"
+};
+
+var otherHomework = Object.create(homework);
+
+otherHomework.topic;   // "JS"
+```
+
+The first argument to `Object.create(..)` specifies an object to link the newly created object to, and then returns the newly created (and linked!) object.
+
+Figure 4 shows how the three objects (`otherHomework`, `homework`, and `Object.prototype`) are linked in a prototype chain:
+
+<figure>
+    <img src="images/fig4.png" width="200" alt="Prototype chain with 3 objects" align="center">
+    <figcaption><em>Fig. 4: Objects in a prototype chain</em></figcaption>
+    <br><br>
+</figure>
+
+Delegation through the prototype chain only applies for accesses to lookup the value in a property. If you assign to a property of an object, that will apply directly to the object regardless of where that object is prototype linked to.
+
+| TIP: |
+| :--- |
+| `Object.create(null)` creates an object that is not prototype linked anywhere, so it's purely just a standalone object; in some circumstances, that may be preferable. |
+
+Consider:
+
+```js
+homework.topic;
+// "JS"
+
+otherHomework.topic;
+// "JS"
+
+otherHomework.topic = "Math";
+otherHomework.topic;
+// "Math"
+
+homework.topic;
+// "JS" -- not "Math"
+```
+
+The assignment to `topic` creates a property of that name directly on `otherHomework`; there's no effect on the `topic` property on `homework`. The next statement then accesses `otherHomework.topic`, and we see the non-delegated answer from that new property: `"Math"`.
+
+Figure 5 shows the objects/properties after the assignment that creates the `otherHomework.topic` property:
+
+<figure>
+    <img src="images/fig5.png" width="200" alt="3 objects linked, with shadowed property" align="center">
+    <figcaption><em>Fig. 5: Shadowed property 'topic'</em></figcaption>
+    <br><br>
+</figure>
+
+The `topic` on `otherHomework` is "shadowing" the property of the same name on the `homework` object in the chain.
+
+| NOTE: |
+| :--- |
+| Another frankly more convoluted but perhaps still more common way of creating an object with a prototype linkage is using the "prototypal class" pattern, from before `class` (see Chapter 2, "Classes") was added in ES6. We'll cover this topic in more detail in Appendix A, "Prototypal 'Classes'". |
+
+### `this` Revisited
+
+We covered the `this` keyword earlier, but its true importance shines when considering how it powers prototype-delegated function calls. Indeed, one of the main reasons `this` supports dynamic context based on how the function is called is so that method calls on objects which delegate through the prototype chain still maintain the expected `this`.
+
+Consider:
+
+```js
+var homework = {
+    study() {
+        console.log(`Please study ${ this.topic }`);
+    }
+};
+
+var jsHomework = Object.create(homework);
+jsHomework.topic = "JS";
+jsHomework.study();
+// Please study JS
+
+var mathHomework = Object.create(homework);
+mathHomework.topic = "Math";
+mathHomework.study();
+// Please study Math
+```
+
+The two objects `jsHomework` and `mathHomework` each prototype link to the single `homework` object, which has the `study()` function. `jsHomework` and `mathHomework` are each given their own `topic` property (see Figure 6).
+
+<figure>
+    <img src="images/fig6.png" width="495" alt="4 objects prototype linked" align="center">
+    <figcaption><em>Fig. 6: Two objects linked to a common parent</em></figcaption>
+    <br><br>
+</figure>
+
+`jsHomework.study()` delegates to `homework.study()`, but its `this` (`this.topic`) for that execution resolves to `jsHomework` because of how the function is called, so `this.topic` is `"JS"`. Similarly for `mathHomework.study()` delegating to `homework.study()` but still resolving `this` to `mathHomework`, and thus `this.topic` as `"Math"`.
+
+The preceding code snippet would be far less useful if `this` was resolved to `homework`. Yet, in many other languages, it would seem `this` would be `homework` because the `study()` method is indeed defined on `homework`.
+
+Unlike many other languages, JS's `this` being dynamic is a critical component of allowing prototype delegation, and indeed `class`, to work as expected!
+
+## Asking "Why?"
+
+The intended take-away from this chapter is that there's a lot more to JS under the hood than is obvious from glancing at the surface.
+
+As you are *getting started* learning and knowing JS more closely, one of the most important skills you can practice and bolster is curiosity, and the art of asking "Why?" when you encounter something in the language.
+
+Even though this chapter has gone quite deep on some of the topics, many details have still been entirely skimmed over. There's much more to learn here, and the path to that starts with you asking the *right* questions of your code. Asking the right questions is a critical skill of becoming a better developer.
+
+In the final chapter of this book, we're going to briefly look at how JS is divided, as covered across the rest of the *You Don't Know JS Yet* book series. Also, don't skip Appendix B of this book, which has some practice code to review some of the main topics covered in this book.
+
+
+
+
+# You Don't Know JS Yet: Get Started - 2nd Edition
+# Chapter 4: The Bigger Picture
+
+This book surveys what you need to be aware of as you *get started* with JS. The goal is to fill in gaps that readers newer to JS might have tripped over in their early encounters with the language. I also hope that we've hinted at enough deeper detail throughout to pique your curiosity to want to dig more into the language.
+
+The rest of the books in this series are where we will unpack all of the rest of the language, in far greater detail than we could have done in a few brief chapters here.
+
+Remember to take your time, though. Rather than rushing onto the next book in an attempt to churn through all the books expediently, spend some time going back over the material in this book. Spend some more time looking through code in your current projects, and comparing what you see to what's been discussed so far.
+
+When you're ready, this final chapter divides the organization of the JS language into three main pillars, then offers a brief roadmap of what to expect from the rest of the book series, and how I suggest you proceed. Also, don't skip the appendices, especially Appendix B, "Practice, Practice, Practice!".
+
+## Pillar 1: Scope and Closure
+
+The organization of variables into units of scope (functions, blocks) is one of the most foundational characteristics of any language; perhaps no other characteristic has a greater impact on how programs behave.
+
+Scopes are like buckets, and variables are like marbles you put into those buckets. The scope model of a language is like the rules that help you determine which color marbles go in which matching-color buckets.
+
+Scopes nest inside each other, and for any given expression or statement, only variables at that level of scope nesting, or in higher/outer scopes, are accessible; variables from lower/inner scopes are hidden and inaccessible.
+
+This is how scopes behave in most languages, which is called lexical scope. The scope unit boundaries, and how variables are organized in them, is determined at the time the program is parsed (compiled). In other words, it's an author-time decision: where you locate a function/scope in the program determines what the scope structure of that part of the program will be.
+
+JS is lexically scoped, though many claim it isn't, because of two particular characteristics of its model that are not present in other lexically scoped languages.
+
+The first is commonly called *hoisting*: when all variables declared anywhere in a scope are treated as if they're declared at the beginning of the scope. The other is that `var`-declared variables are function scoped, even if they appear inside a block.
+
+Neither hoisting nor function-scoped `var` are sufficient to back the claim that JS is not lexically scoped. `let`/`const` declarations have a peculiar error behavior called the "Temporal Dead Zone" (TDZ) which results in observable but unusable variables. Though TDZ can be strange to encounter, it's *also* not an invalidation of lexical scoping. All of these are just unique parts of the language that should be learned and understood by all JS developers.
+
+Closure is a natural result of lexical scope when the language has functions as first-class values, as JS does. When a function makes reference to variables from an outer scope, and that function is passed around as a value and executed in other scopes, it maintains access to its original scope variables; this is closure.
+
+Across all of programming, but especially in JS, closure drives many of the most important programming patterns, including modules. As I see it, modules are as *with the grain* as you can get, when it comes to code organization in JS.
+
+To dig further into scope, closures, and how modules work, read Book 2, *Scope & Closures*.
+
+## Pillar 2: Prototypes
+
+The second pillar of the language is the prototypes system. We covered this topic in-depth in Chapter 3 ("Prototypes"), but I just want to make a few more comments about its importance.
+
+JS is one of very few languages where you have the option to create objects directly and explicitly, without first defining their structure in a class.
+
+For many years, people implemented the class design pattern on top of prototypes—so-called "prototypal inheritance" (see Appendix A, "Prototypal 'Classes'")—and then with the advent of ES6's `class` keyword, the language doubled-down on its inclination toward OO/class-style programming.
+
+But I think that focus has obscured the beauty and power of the prototype system: the ability for two objects to simply connect with each other and cooperate dynamically (during function/method execution) through sharing a `this` context.
+
+Classes are just one pattern you can build on top of such power. But another approach, in a very different direction, is to simply embrace objects as objects, forget classes altogether, and let objects cooperate through the prototype chain. This is called *behavior delegation*. I think delegation is more powerful than class inheritance, as a means for organizing behavior and data in our programs.
+
+But class inheritance gets almost all the attention. And the rest goes to functional programming (FP), as the sort of "anti-class" way of designing programs. This saddens me, because it snuffs out any chance for exploration of delegation as a viable alternative.
+
+I encourage you to spend plenty of time deep in Book 3, *Objects & Classes*, to see how object delegation holds far more potential than we've perhaps realized. This isn't an anti-`class` message, but it is intentionally a "classes aren't the only way to use objects" message that I want more JS developers to consider.
+
+Object delegation is, I would argue, far more *with the grain* of JS, than classes (more on *grains* in a bit).
+
+## Pillar 3: Types and Coercion
+
+The third pillar of JS is by far the most overlooked part of JS's nature.
+
+The vast majority of developers have strong misconceptions about how *types* work in programming languages, and especially how they work in JS. A tidal wave of interest in the broader JS community has begun to shift to "static typing" approaches, using type-aware tooling like TypeScript or Flow.
+
+I agree that JS developers should learn more about types, and should learn more about how JS manages type conversions. I also agree that type-aware tooling can help developers, assuming they have gained and used this knowledge in the first place!
+
+But I don't agree at all that the inevitable conclusion of this is to decide JS's type mechanism is bad and that we need to cover up JS's types with solutions outside the language. We don't have to follow the "static typing" way to be smart and solid with types in our programs. There are other options, if you're just willing to go *against the grain* of the crowd, and *with the grain* of JS (again, more on that to come).
+
+Arguably, this pillar is more important than the other two, in the sense that no JS program will do anything useful if it doesn't properly leverage JS's value types, as well as the conversion (coercion) of values between types.
+
+Even if you love TypeScript/Flow, you are not going to get the most out of those tools or coding approaches if you aren't deeply familiar with how the language itself manages value types.
+
+To learn more about JS types and coercion, check out Book 4, *Types & Grammar*. But please don't skip over this topic just because you've always heard that we should use `===` and forget about the rest.
+
+Without learning this pillar, your foundation in JS is shaky and incomplete at best.
+
+## With the Grain
+
+I have some advice to share on continuing your learning journey with JS, and your path through the rest of this book series: be aware of the *grain* (recall various references to *grain* earlier in this chapter).
+
+First, consider the *grain* (as in, wood) of how most people approach and use JS. You've probably already noticed that these books cut against that *grain* in many respects. In YDKJSY, I respect you the reader enough to explain all the parts of JS, not only some select popular parts. I believe you're both capable and deserving of that knowledge.
+
+But that is not what you'll find from a lot of other material out there. It also means that the more you follow and adhere to the guidance from these books—that you think carefully and analyze for yourself what's best in your code—the more you will stand out. That can be a good and bad thing. If you ever want to break out from the crowd, you're going to have to break from how the crowd does it!
+
+But I've also had many people tell me that they quoted some topic/explanation from these books during a job interview, and the interviewer told the candidate they were wrong; indeed, people have reportedly lost out on job offers as a result.
+
+As much as possible, I endeavor in these books to provide completely accurate information about JS, informed generally from the specification itself. But I also dose out quite a bit of my opinions on how you can interpret and use JS to the best benefit in your programs. I don't present opinion as fact, or vice versa. You'll always know which is which in these books.
+
+Facts about JS are not really up for debate. Either the specification says something, or it doesn't. If you don't like what the specification says, or my relaying of it, take that up with TC39! If you're in an interview and they claim you're wrong on the facts, ask them right then and there if you can look it up in the specification. If the interviewer won't re-consider, then you shouldn't want to work there anyway.
+
+But if you choose to align with my opinions, you have to be prepared to back up those choices with *why* you feel that way. Don't just parrot what I say. Own your opinions. Defend them. And if someone you were hoping to work with disagrees, walk away with your head still held high. It's a big JS, and there's plenty of room for lots of different ways.
+
+In other words, don't be afraid to go against the *grain*, as I have done with these books and all my teachings. Nobody can tell you how you will best make use of JS; that's for you to decide. I'm merely trying to empower you in coming to your own conclusions, no matter what they are.
+
+On the other hand, there's a *grain* you really should pay attention to and follow: the *grain* of how JS works, at the language level. There are things that work well and naturally in JS, given the right practice and approach, and there are things you really shouldn't try to do in the language.
+
+Can you make your JS program look like a Java, C#, or Perl program? What about Python or Ruby, or even PHP? To varying degrees, sure you can. But should you?
+
+No, I don't think you should. I think you should learn and embrace the JS way, and make your JS programs as JS'y as is practical. Some will think that means sloppy and informal programming, but I don't mean that at all. I just mean that JS has a lot of patterns and idioms that are recognizably "JS," and going with that *grain* is the general path to best success.
+
+Finally, maybe the most important *grain* to recognize is how the existing program(s) you're working on, and developers you're working with, do stuff. Don't read these books and then try to change *all that grain* in your existing projects over night. That approach will always fail.
+
+You'll have to shift these things little by little, over time. Work on building consensus with your fellow developers on why it's important to re-visit and re-consider an approach. But do so with just one small topic at a time, and let before-and-after code comparisons do most of the talking. Bring everyone on the team together to discuss, and push for decisions that are based on analysis and evidence from the code rather than the inertia of "our senior devs have always done it this way."
+
+That's the most important advice I can impart to help you learn JS. Always keep looking for better ways to use what JS gives us to author more readable code. Everyone who works on your code, including your future self, will thank you!
+
+## In Order
+
+So now you've got a broader perspective on what's left to explore in JS, and the right attitude to approach the rest of your journey.
+
+But one of the most common practical questions I get at this point is, "What order should I read the books?" There is a straightforward answer... but it also depends.
+
+My suggestion for most readers is to proceed through this series in this order:
+
+1. Get started with a solid foundation of JS from *Get Started* (Book 1) -- good news, you've already almost finished this book!
+
+2. In *Scope & Closures* (Book 2), dig into the first pillar of JS: lexical scope, how that supports closure, and how the module pattern organizes code.
+
+3. In *Objects & Classes* (Book 3), focus on the second pillar of JS: how JS's `this` works, how object prototypes support delegation, and how prototypes enable the `class` mechanism for OO-style code organization.
+
+4. In *Types & Grammar* (Book 4), tackle the third and final pillar of JS: types and type coercion, as well as how JS's syntax and grammar define how we write our code.
+
+5. With the **three pillars** solidly in place, *Sync & Async* (Book 5) then explores how we use flow control to model state change in our programs, both synchronously (right away) and asynchronously (over time).
+
+6. The series concludes with *ES.Next & Beyond* (Book 6), a forward look at the near- and mid-term future of JS, including a variety of features likely coming to your JS programs before too long.
+
+That's the intended order to read this book series.
+
+However, Books 2, 3, and 4 can generally be read in any order, depending on which topic you feel most curious about and comfortable exploring first. But I don't recommend you skip any of these three books—not even *Types & Grammar*, as some of you will be tempted to do!—even if you think you already have that topic down.
+
+Book 5 (*Sync & Async*) is crucial for deeply understanding JS, but if you start digging in and find it's too intimidating, this book can be deferred until you're more experienced with the language. The more JS you've written (and struggled with!), the more you'll come to appreciate this book. So don't be afraid to come back to it at a later time.
+
+The final book in the series, *ES.Next & Beyond*, in some respects stands alone. It can be read at the end, as I suggest, or right after *Getting Started* if you're looking for a shortcut to broaden your radar of what JS is all about. This book will also be more likely to receive updates in the future, so you'll probably want to re-visit it occasionally.
+
+However you choose to proceed with YDKJSY, check out the appendices of this book first, especially practicing the snippets in Appendix B, "Practice, Practice, Practice!" Did I mention you should go practice!? There's no better way to learn code than to write it.
+
+
+
+
+# You Don't Know JS Yet: Get Started - 2nd Edition
+# Appendix A: Exploring Further
+
+In this appendix, we're going to explore some topics from the main chapter text in a bit more detail. Think of this content as an optional preview of some of the more nuanced details covered throughout the rest of the book series.
+
+## Values vs. References
+
+In Chapter 2, we introduced the two main types of values: primitives and objects. But we didn't discuss yet one key difference between the two: how these values are assigned and passed around.
+
+In many languages, the developer can choose between assigning/passing a value as the value itself, or as a reference to the value. In JS, however, this decision is entirely determined by the kind of value. That surprises a lot of developers from other languages when they start using JS.
+
+If you assign/pass a value itself, the value is copied. For example:
+
+```js
+var myName = "Kyle";
+
+var yourName = myName;
+```
+
+Here, the `yourName` variable has a separate copy of the `"Kyle"` string from the value that's stored in `myName`. That's because the value is a primitive, and primitive values are always assigned/passed as **value copies**.
+
+Here's how you can prove there's two separate values involved:
+
+```js
+var myName = "Kyle";
+
+var yourName = myName;
+
+myName = "Frank";
+
+console.log(myName);
+// Frank
+
+console.log(yourName);
+// Kyle
+```
+
+See how `yourName` wasn't affected by the re-assignment of `myName` to `"Frank"`? That's because each variable holds its own copy of the value.
+
+By contrast, references are the idea that two or more variables are pointing at the same value, such that modifying this shared value would be reflected by an access via any of those references. In JS, only object values (arrays, objects, functions, etc.) are treated as references.
+
+Consider:
+
+```js
+var myAddress = {
+    street: "123 JS Blvd",
+    city: "Austin",
+    state: "TX"
+};
+
+var yourAddress = myAddress;
+
+// I've got to move to a new house!
+myAddress.street = "456 TS Ave";
+
+console.log(yourAddress.street);
+// 456 TS Ave
+```
+
+Because the value assigned to `myAddress` is an object, it's held/assigned by reference, and thus the assignment to the `yourAddress` variable is a copy of the reference, not the object value itself. That's why the updated value assigned to the `myAddress.street` is reflected when we access `yourAddress.street`. `myAddress` and `yourAddress` have copies of the reference to the single shared object, so an update to one is an update to both.
+
+Again, JS chooses the value-copy vs. reference-copy behavior based on the value type. Primitives are held by value, objects are held by reference. There's no way to override this in JS, in either direction.
+
+## So Many Function Forms
+
+Recall this snippet from the "Functions" section in Chapter 2:
+
+```js
+var awesomeFunction = function(coolThings) {
+    // ..
+    return amazingStuff;
+};
+```
+
+The function expression here is referred to as an *anonymous function expression*, since it has no name identifier between the `function` keyword and the `(..)` parameter list. This point confuses many JS developers because as of ES6, JS performs a "name inference" on an anonymous function:
+
+```js
+awesomeFunction.name;
+// "awesomeFunction"
+```
+
+The `name` property of a function will reveal either its directly given name (in the case of a declaration) or its inferred name in the case of an anonymous function expression. That value is generally used by developer tools when inspecting a function value or when reporting an error stack trace.
+
+So even an anonymous function expression *might* get a name. However, name inference only happens in limited cases such as when the function expression is assigned (with `=`). If you pass a function expression as an argument to a function call, for example, no name inference occurs; the `name` property will be an empty string, and the developer console will usually report "(anonymous function)".
+
+Even if a name is inferred, **it's still an anonymous function.** Why? Because the inferred name is a metadata string value, not an available identifier to refer to the function. An anonymous function doesn't have an identifier to use to refer to itself from inside itself—for recursion, event unbinding, etc.
+
+Compare the anonymous function expression form to:
+
+```js
+// let awesomeFunction = ..
+// const awesomeFunction = ..
+var awesomeFunction = function someName(coolThings) {
+    // ..
+    return amazingStuff;
+};
+
+awesomeFunction.name;
+// "someName"
+```
+
+This function expression is a *named function expression*, since the identifier `someName` is directly associated with the function expression at compile time; the association with the identifier `awesomeFunction` still doesn't happen until runtime at the time of that statement. Those two identifiers don't have to match; sometimes it makes sense to have them be different, other times it's better to have them be the same.
+
+Notice also that the explicit function name, the identifier `someName`, takes precedence when assigning a *name* for the `name` property.
+
+Should function expressions be named or anonymous? Opinions vary widely on this. Most developers tend to be unconcerned with using anonymous functions. They're shorter, and unquestionably more common in the broad sphere of JS code out there.
+
+In my opinion, if a function exists in your program, it has a purpose; otherwise, take it out! And if it has a purpose, it has a natural name that describes that purpose.
+
+If a function has a name, you the code author should include that name in the code, so that the reader does not have to infer that name from reading and mentally executing that function's source code. Even a trivial function body like `x * 2` has to be read to infer a name like "double" or "multBy2"; that brief extra mental work is unnecessary when you could just take a second to name the function "double" or "multBy2" *once*, saving the reader that repeated mental work every time it's read in the future.
+
+There are, regrettably in some respects, many other function definition forms in JS as of early 2020 (maybe more in the future!).
+
+Here are some more declaration forms:
+
+```js
+// generator function declaration
+function *two() { .. }
+
+// async function declaration
+async function three() { .. }
+
+// async generator function declaration
+async function *four() { .. }
+
+// named function export declaration (ES6 modules)
+export function five() { .. }
+```
+
+And here are some more of the (many!) function expression forms:
+
+```js
+// IIFE
+(function(){ .. })();
+(function namedIIFE(){ .. })();
+
+// asynchronous IIFE
+(async function(){ .. })();
+(async function namedAIIFE(){ .. })();
+
+// arrow function expressions
+var f;
+f = () => 42;
+f = x => x * 2;
+f = (x) => x * 2;
+f = (x,y) => x * y;
+f = x => ({ x: x * 2 });
+f = x => { return x * 2; };
+f = async x => {
+    var y = await doSomethingAsync(x);
+    return y * 2;
+};
+someOperation( x => x * 2 );
+// ..
+```
+
+Keep in mind that arrow function expressions are **syntactically anonymous**, meaning the syntax doesn't provide a way to provide a direct name identifier for the function. The function expression may get an inferred name, but only if it's one of the assignment forms, not in the (more common!) form of being passed as a function call argument (as in the last line of the snippet).
+
+Since I don't think anonymous functions are a good idea to use frequently in your programs, I'm not a fan of using the `=>` arrow function form. This kind of function actually has a specific purpose (i.e., handling the `this` keyword lexically), but that doesn't mean we should use it for every function we write. Use the most appropriate tool for each job.
+
+Functions can also be specified in class definitions and object literal definitions. They're typically referred to as "methods" when in these forms, though in JS this term doesn't have much observable difference over "function":
+
+```js
+class SomethingKindaGreat {
+    // class methods
+    coolMethod() { .. }   // no commas!
+    boringMethod() { .. }
+}
+
+var EntirelyDifferent = {
+    // object methods
+    coolMethod() { .. },   // commas!
+    boringMethod() { .. },
+
+    // (anonymous) function expression property
+    oldSchool: function() { .. }
+};
+```
+
+Phew! That's a lot of different ways to define functions.
+
+There's no simple shortcut path here; you just have to build familiarity with all the function forms so you can recognize them in existing code and use them appropriately in the code you write. Study them closely and practice!
+
+## Coercive Conditional Comparison
+
+Yes, that section name is quite a mouthful. But what are we talking about? We're talking about conditional expressions needing to perform coercion-oriented comparisons to make their decisions.
+
+`if` and `? :`-ternary statements, as well as the test clauses in `while` and `for` loops, all perform an implicit value comparison. But what sort? Is it "strict" or "coercive"? Both, actually.
+
+Consider:
+
+```js
+var x = 1;
+
+if (x) {
+    // will run!
+}
+
+while (x) {
+    // will run, once!
+    x = false;
+}
+```
+
+You might think of these `(x)` conditional expressions like this:
+
+```js
+var x = 1;
+
+if (x == true) {
+    // will run!
+}
+
+while (x == true) {
+    // will run, once!
+    x = false;
+}
+```
+
+In this specific case -- the value of `x` being `1` -- that mental model works, but it's not accurate more broadly. Consider:
+
+```js
+var x = "hello";
+
+if (x) {
+    // will run!
+}
+
+if (x == true) {
+    // won't run :(
+}
+```
+
+Oops. So what is the `if` statement actually doing? This is the more accurate mental model:
+
+```js
+var x = "hello";
+
+if (Boolean(x) == true) {
+    // will run
+}
+
+// which is the same as:
+
+if (Boolean(x) === true) {
+    // will run
+}
+```
+
+Since the `Boolean(..)` function always returns a value of type boolean, the `==` vs `===` in this snippet is irrelevant; they'll both do the same thing. But the important part is to see that before the comparison, a coercion occurs, from whatever type `x` currently is, to boolean.
+
+You just can't get away from coercions in JS comparisons. Buckle down and learn them.
+
+## Prototypal "Classes"
+
+In Chapter 3, we introduced prototypes and showed how we can link objects through a prototype chain.
+
+Another way of wiring up such prototype linkages served as the (honestly, ugly) predecessor to the elegance of the ES6 `class` system (see Chapter 2, "Classes"), and is referred to as prototypal classes.
+
+| TIP: |
+| :--- |
+| While this style of code is quite uncommon in JS these days, it's still perplexingly rather common to be asked about it in job interviews! |
+
+Let's first recall the `Object.create(..)` style of coding:
+
+```js
+var Classroom = {
+    welcome() {
+        console.log("Welcome, students!");
+    }
+};
+
+var mathClass = Object.create(Classroom);
+
+mathClass.welcome();
+// Welcome, students!
+```
+
+Here, a `mathClass` object is linked via its prototype to a `Classroom` object. Through this linkage, the function call `mathClass.welcome()` is delegated to the method defined on `Classroom`.
+
+The prototypal class pattern would have labeled this delegation behavior "inheritance," and alternatively have defined it (with the same behavior) as:
+
+```js
+function Classroom() {
+    // ..
+}
+
+Classroom.prototype.welcome = function hello() {
+    console.log("Welcome, students!");
+};
+
+var mathClass = new Classroom();
+
+mathClass.welcome();
+// Welcome, students!
+```
+
+All functions by default reference an empty object at a property named `prototype`. Despite the confusing naming, this is **not** the function's *prototype* (where the function is prototype linked to), but rather the prototype object to *link to* when other objects are created by calling the function with `new`.
+
+We add a `welcome` property on that empty object (called `Classroom.prototype`), pointing at the `hello()` function.
+
+Then `new Classroom()` creates a new object (assigned to `mathClass`), and prototype links it to the existing `Classroom.prototype` object.
+
+Though `mathClass` does not have a `welcome()` property/function, it successfully delegates to the function `Classroom.prototype.welcome()`.
+
+This "prototypal class" pattern is now strongly discouraged, in favor of using ES6's `class` mechanism:
+
+```js
+class Classroom {
+    constructor() {
+        // ..
+    }
+
+    welcome() {
+        console.log("Welcome, students!");
+    }
+}
+
+var mathClass = new Classroom();
+
+mathClass.welcome();
+// Welcome, students!
+```
+
+Under the covers, the same prototype linkage is wired up, but this `class` syntax fits the class-oriented design pattern much more cleanly than "prototypal classes".
+
+
+
+
+# You Don't Know JS Yet: Get Started - 2nd Edition
+# Appendix B: Practice, Practice, Practice!
+
+In this appendix, we'll explore some exercises and their suggested solutions. These are just to *get you started* with practice over the concepts from the book.
+
+## Practicing Comparisons
+
+Let's practice working with value types and comparisons (Chapter 4, Pillar 3) where coercion will need to be involved.
+
+`scheduleMeeting(..)` should take a start time (in 24-hour format as a string "hh:mm") and a meeting duration (number of minutes). It should return `true` if the meeting falls entirely within the work day (according to the times specified in `dayStart` and `dayEnd`); return `false` if the meeting violates the work day bounds.
+
+```js
+const dayStart = "07:30";
+const dayEnd = "17:45";
+
+function scheduleMeeting(startTime,durationMinutes) {
+    // ..TODO..
+}
+
+scheduleMeeting("7:00",15);     // false
+scheduleMeeting("07:15",30);    // false
+scheduleMeeting("7:30",30);     // true
+scheduleMeeting("11:30",60);    // true
+scheduleMeeting("17:00",45);    // true
+scheduleMeeting("17:30",30);    // false
+scheduleMeeting("18:00",15);    // false
+```
+
+Try to solve this yourself first. Consider the usage of equality and relational comparison operators, and how coercion impacts this code. Once you have code that works, *compare* your solution(s) to the code in "Suggested Solutions" at the end of this appendix.
+
+## Practicing Closure
+
+Now let's practice with closure (Chapter 4, Pillar 1).
+
+The `range(..)` function takes a number as its first argument, representing the first number in a desired range of numbers. The second argument is also a number representing the end of the desired range (inclusive). If the second argument is omitted, then another function should be returned that expects that argument.
+
+```js
+function range(start,end) {
+    // ..TODO..
+}
+
+range(3,3);    // [3]
+range(3,8);    // [3,4,5,6,7,8]
+range(3,0);    // []
+
+var start3 = range(3);
+var start4 = range(4);
+
+start3(3);     // [3]
+start3(8);     // [3,4,5,6,7,8]
+start3(0);     // []
+
+start4(6);     // [4,5,6]
+```
+
+Try to solve this yourself first.
+
+Once you have code that works, *compare* your solution(s) to the code in "Suggested Solutions" at the end of this appendix.
+
+## Practicing Prototypes
+
+Finally, let's work on `this` and objects linked via prototype (Chapter 4, Pillar 2).
+
+Define a slot machine with three reels that can individually `spin()`, and then `display()` the current contents of all the reels.
+
+The basic behavior of a single reel is defined in the `reel` object below. But the slot machine needs individual reels—objects that delegate to `reel`, and which each have a `position` property.
+
+A reel only *knows how* to `display()` its current slot symbol, but a slot machine typically shows three symbols per reel: the current slot (`position`), one slot above (`position - 1`), and one slot below (`position + 1`). So displaying the slot machine should end up displaying a 3 x 3 grid of slot symbols.
+
+```js
+function randMax(max) {
+    return Math.trunc(1E9 * Math.random()) % max;
+}
+
+var reel = {
+    symbols: [
+        "♠", "♥", "♦", "♣", "☺", "★", "☾", "☀"
+    ],
+    spin() {
+        if (this.position == null) {
+            this.position = randMax(
+                this.symbols.length - 1
+            );
+        }
+        this.position = (
+            this.position + 100 + randMax(100)
+        ) % this.symbols.length;
+    },
+    display() {
+        if (this.position == null) {
+            this.position = randMax(
+                this.symbols.length - 1
+            );
+        }
+        return this.symbols[this.position];
+    }
+};
+
+var slotMachine = {
+    reels: [
+        // this slot machine needs 3 separate reels
+        // hint: Object.create(..)
+    ],
+    spin() {
+        this.reels.forEach(function spinReel(reel){
+            reel.spin();
+        });
+    },
+    display() {
+        // TODO
+    }
+};
+
+slotMachine.spin();
+slotMachine.display();
+// ☾ | ☀ | ★
+// ☀ | ♠ | ☾
+// ♠ | ♥ | ☀
+
+slotMachine.spin();
+slotMachine.display();
+// ♦ | ♠ | ♣
+// ♣ | ♥ | ☺
+// ☺ | ♦ | ★
+```
+
+Try to solve this yourself first.
+
+Hints:
+
+* Use the `%` modulo operator for wrapping `position` as you access symbols circularly around a reel.
+
+* Use `Object.create(..)` to create an object and prototype-link it to another object. Once linked, delegation allows the objects to share `this` context during method invocation.
+
+* Instead of modifying the reel object directly to show each of the three positions, you can use another temporary object (`Object.create(..)` again) with its own `position`, to delegate from.
+
+Once you have code that works, *compare* your solution(s) to the code in "Suggested Solutions" at the end of this appendix.
+
+## Suggested Solutions
+
+Keep in mind that these suggested solutions are just that: suggestions. There's many different ways to solve these practice exercises. Compare your approach to what you see here, and consider the pros and cons of each.
+
+Suggested solution for "Comparisons" (Pillar 3) practice:
+
+```js
+const dayStart = "07:30";
+const dayEnd = "17:45";
+
+function scheduleMeeting(startTime,durationMinutes) {
+    var [ , meetingStartHour, meetingStartMinutes ] =
+        startTime.match(/^(\d{1,2}):(\d{2})$/) || [];
+
+    durationMinutes = Number(durationMinutes);
+
+    if (
+        typeof meetingStartHour == "string" &&
+        typeof meetingStartMinutes == "string"
+    ) {
+        let durationHours =
+            Math.floor(durationMinutes / 60);
+        durationMinutes =
+            durationMinutes - (durationHours * 60);
+        let meetingEndHour =
+            Number(meetingStartHour) + durationHours;
+        let meetingEndMinutes =
+            Number(meetingStartMinutes) +
+            durationMinutes;
+
+        if (meetingEndMinutes >= 60) {
+            meetingEndHour = meetingEndHour + 1;
+            meetingEndMinutes =
+                meetingEndMinutes - 60;
+        }
+
+        // re-compose fully-qualified time strings
+        // (to make comparison easier)
+        let meetingStart = `${
+            meetingStartHour.padStart(2,"0")
+        }:${
+            meetingStartMinutes.padStart(2,"0")
+        }`;
+        let meetingEnd = `${
+            String(meetingEndHour).padStart(2,"0")
+        }:${
+            String(meetingEndMinutes).padStart(2,"0")
+        }`;
+
+        // NOTE: since expressions are all strings,
+        // comparisons here are alphabetic, but it's
+        // safe here since they're fully qualified
+        // time strings (ie, "07:15" < "07:30")
+        return (
+            meetingStart >= dayStart &&
+            meetingEnd <= dayEnd
+        );
+    }
+
+    return false;
+}
+
+scheduleMeeting("7:00",15);     // false
+scheduleMeeting("07:15",30);    // false
+scheduleMeeting("7:30",30);     // true
+scheduleMeeting("11:30",60);    // true
+scheduleMeeting("17:00",45);    // true
+scheduleMeeting("17:30",30);    // false
+scheduleMeeting("18:00",15);    // false
+```
+
+----
+
+Suggested solution for "Closure" (Pillar 1) practice:
+
+```js
+function range(start,end) {
+    start = Number(start) || 0;
+
+    if (end === undefined) {
+        return function getEnd(end) {
+            return getRange(start,end);
+        };
+    }
+    else {
+        end = Number(end) || 0;
+        return getRange(start,end);
+    }
+
+
+    // **********************
+
+    function getRange(start,end) {
+        var ret = [];
+        for (let i = start; i <= end; i++) {
+            ret.push(i);
+        }
+        return ret;
+    }
+}
+
+range(3,3);    // [3]
+range(3,8);    // [3,4,5,6,7,8]
+range(3,0);    // []
+
+var start3 = range(3);
+var start4 = range(4);
+
+start3(3);     // [3]
+start3(8);     // [3,4,5,6,7,8]
+start3(0);     // []
+
+start4(6);     // [4,5,6]
+```
+
+----
+
+Suggested solution for "Prototypes" (Pillar 2) practice:
+
+```js
+function randMax(max) {
+    return Math.trunc(1E9 * Math.random()) % max;
+}
+
+var reel = {
+    symbols: [
+        "♠", "♥", "♦", "♣", "☺", "★", "☾", "☀"
+    ],
+    spin() {
+        if (this.position == null) {
+            this.position = randMax(
+                this.symbols.length - 1
+            );
+        }
+        this.position = (
+            this.position + 100 + randMax(100)
+        ) % this.symbols.length;
+    },
+    display() {
+        if (this.position == null) {
+            this.position = randMax(
+                this.symbols.length - 1
+            );
+        }
+        return this.symbols[this.position];
+    }
+};
+
+var slotMachine = {
+    reels: [
+        Object.create(reel),
+        Object.create(reel),
+        Object.create(reel)
+    ],
+    spin() {
+        this.reels.forEach(function spinReel(reel){
+            reel.spin();
+        });
+    },
+    display() {
+        var lines = [];
+
+        // display all 3 lines on the slot machine
+        for (
+            let linePos = -1; linePos <= 1; linePos++
+        ) {
+            let line = this.reels.map(
+                function getSlot(reel){
+                    var slot = Object.create(reel);
+                    slot.position = (
+                        reel.symbols.length +
+                        reel.position +
+                        linePos
+                    ) % reel.symbols.length;
+                    return slot.display();
+                }
+            );
+            lines.push(line.join(" | "));
+        }
+
+        return lines.join("\n");
+    }
+};
+
+slotMachine.spin();
+slotMachine.display();
+// ☾ | ☀ | ★
+// ☀ | ♠ | ☾
+// ♠ | ♥ | ☀
+
+slotMachine.spin();
+slotMachine.display();
+// ♦ | ♠ | ♣
+// ♣ | ♥ | ☺
+// ☺ | ♦ | ★
+```
+
+That's it for this book. But now it's time to look for real projects to practice these ideas on. Just keep coding, because that's the best way to learn!
